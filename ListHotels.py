@@ -7,21 +7,17 @@ from typing import Any, Dict, List
 from boto3.dynamodb.conditions import Key
 from dynamodb_json import json_util as ddb_json
 
-def main():
-    token="< put id token here>"
-    print(list_hotels(token))
 
-def handler(event, context):
-    token = event["queryStringParamets"]["token"]
-    return list_hotels(token)
-
-def list_hotels(token:str):
+def handler(event, context):    
+    token = event["queryStringParameters"]["token"]
+    
     response = {
         "headers": {
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Headers": "*",
             "Access-Control-Allow-Methods": "OPTIONS, GET"
         },
+        "body":"",
         "statusCode": HTTPStatus.OK,
     }    
 
@@ -37,15 +33,14 @@ def list_hotels(token:str):
     db_client = boto3.resource("dynamodb" , region_name = region)
     table = db_client.Table("Hotels")
 
-    response = table.scan(
+    scan_response = table.scan(
         FilterExpression = Key("userId").eq(user_id)
     )
 
-    hotels = ddb_json.loads(response["Items"])
+    hotels = ddb_json.loads(scan_response["Items"])
 
     response["body"] = json.dumps({"Hotels": hotels})
+    
+    print(response)
 
     return response
-
-if __name__=="__main__":
-    main()
